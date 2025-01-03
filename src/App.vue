@@ -45,10 +45,7 @@ export default {
     async search(query) {
       try {
         this.tracks = [];
-
-        const isLocal = window.location.hostname === 'localhost';
-        const apiUrl = isLocal ? 'http://localhost:3000/api/search' : 'https://sound3d.vercel.app/api/search';
-        const response = await axios.get(`${apiUrl}?q=${query}`);
+        const response = await axios.get(`https://sound3d.vercel.app/api/search?q=${query}`);
         this.tracks = response.data.data;
         this.hasSearched = true;
       } catch (error) {
