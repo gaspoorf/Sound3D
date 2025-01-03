@@ -45,7 +45,8 @@ export default {
     async search(query) {
       try {
         this.tracks = [];
-        const response = await axios.get(`https://sound3d.vercel.app/api/search?q=${query}`);
+        const apiUrl = process.env.API_URL;
+        const response = await axios.get(`${apiUrl}?q=${query}`);
         this.tracks = response.data.data;
         this.hasSearched = true;
       } catch (error) {

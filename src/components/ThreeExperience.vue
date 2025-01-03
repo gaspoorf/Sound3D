@@ -236,7 +236,8 @@ export default {
         albumMeshes.push(mesh);
 
         const sound = new THREE.PositionalAudio(listener);
-        const audioUrl = `http://localhost:3000/api/audio?url=${encodeURIComponent(track.preview)}`;
+        const apiUrl = process.env.API_URL;
+        const audioUrl = `${apiUrl}?url=${encodeURIComponent(track.preview)}`;
 
         const audioLoader = new THREE.AudioLoader();
         audioLoader.load(audioUrl, (buffer) => {
