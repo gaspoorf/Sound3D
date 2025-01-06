@@ -236,8 +236,7 @@ export default {
         albumMeshes.push(mesh);
 
         const sound = new THREE.PositionalAudio(listener);
-        const apiUrl = process.env.API_URL;
-        const audioUrl = `${apiUrl}?url=${encodeURIComponent(track.preview)}`;
+        const audioUrl = `https://sound3d.vercel.app/api/audio?url=${encodeURIComponent(track.preview)}`;
 
         const audioLoader = new THREE.AudioLoader();
         audioLoader.load(audioUrl, (buffer) => {
