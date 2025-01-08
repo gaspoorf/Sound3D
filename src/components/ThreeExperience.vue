@@ -374,11 +374,19 @@ export default {
           this.camera.position.z = this.currentZ;
         }
 
+    
+
+        let targetVolumes = Array(albumMeshes.length).fill(0); // Les volumes cibles des sons
+
         albumMeshes.forEach((mesh, index) => {
           const distance = this.camera.position.distanceTo(mesh.position);
-          const volume = Math.max(0, 1.5 - distance / 10);
-          sounds[index].setVolume(volume);
+          const targetVolume = Math.max(0, 1.5 - distance / 10);
+
+          // Lissage du volume
+          targetVolumes[index] += (targetVolume - targetVolumes[index]) * 0.1;
+          sounds[index].setVolume(targetVolumes[index]);
         });
+
 
         let closestMesh = null;
         let closestDistance = Infinity;
