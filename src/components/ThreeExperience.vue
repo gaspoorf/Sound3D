@@ -282,9 +282,10 @@ export default {
           sound.setBuffer(buffer);
           sound.setRefDistance(1);
           sound.setLoop(true);
-          sound.setVolume(1);
+          sound.setVolume(0);
           sound.play();
         });
+        
         sounds.push(sound);
         mesh.add(sound);
 
@@ -376,20 +377,42 @@ export default {
 
     
 
-        let targetVolumes = Array(albumMeshes.length).fill(0); // Les volumes cibles des sons
+        // let targetVolumes = Array(albumMeshes.length).fill(0); // Les volumes cibles des sons
+        
 
-        albumMeshes.forEach((mesh, index) => {
-          const distance = this.camera.position.distanceTo(mesh.position);
-          const targetVolume = Math.max(0, 1.5 - distance / 10);
+        // albumMeshes.forEach((mesh, index) => {
+        //   const distance = this.camera.position.distanceTo(mesh.position);
+        //   const targetVolume = Math.max(0, 1.5 - distance / 10);
 
-          // Lissage du volume
-          targetVolumes[index] += (targetVolume - targetVolumes[index]) * 0.1;
-          sounds[index].setVolume(targetVolumes[index]);
-        });
+        //   // Lissage du volume
+        //   targetVolumes[index] += (targetVolume - targetVolumes[index]) * 0.1;
+        //   sounds[index].setVolume(targetVolumes[index]);
+        // });
 
 
         let closestMesh = null;
         let closestDistance = Infinity;
+
+        let closestIndex = -1;
+        
+
+        albumMeshes.forEach((mesh, index) => {
+          const distance = Math.abs(this.camera.position.z - mesh.position.z);
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIndex = index;
+          }
+        });
+
+        // Ajuster les volumes
+        albumMeshes.forEach((mesh, index) => {
+          if (index === closestIndex) {
+            sounds[index].setVolume(1); // Volume maximum pour le plus proche
+          } else {
+            sounds[index].setVolume(0); // Muter les autres sons
+          }
+        });
+
 
         albumMeshes.forEach((mesh) => {
           const distance = Math.abs(this.camera.position.z - mesh.position.z);
