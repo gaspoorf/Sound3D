@@ -18,8 +18,9 @@ export default {
   data() {
     return {
       cameraAnimationInProgress: false,  // Variable pour savoir si l'animation de la caméra est en cours
-      targetZ: 750,
+      targetZ: 2500,
       model: null,
+      firstAnim: true,
     };
   },
   mounted() {
@@ -38,7 +39,7 @@ export default {
             x: 0,
             y: 0,
             z: 750,  // Position cible de la caméra
-            duration: 3, // Durée de l'animation
+            duration: 6, // Durée de l'animation
             ease: "power2.out",  // Type de transition (accélération/décélération)
             onStart: () => {
               this.cameraAnimationInProgress = true;  // Indiquer que l'animation de la caméra a commencé
@@ -66,6 +67,48 @@ export default {
     this.cleanUp();
   },
   methods: {
+
+    stopAllSounds() {
+      this.sounds.forEach((sound) => {
+        if (sound.isPlaying) {
+          sound.stop();
+        }
+      });
+      this.sounds = []; // Optionnel, pour nettoyer la liste des sons
+    },
+
+    
+    firstAnimation() {
+      // Premiere animation 
+      console.log("first anim started");
+      setTimeout(() => {
+        gsap.to(this.camera.position, {
+          x: 200,
+          y: 0,
+          z: 750, // Position cible de la caméra
+          duration: 7, // Durée de l'animation
+          ease: "power2.inOut",
+          onStart: () => {
+            this.cameraAnimationInProgress = true; // Indiquer que l'animation de la caméra a commencé
+          },
+          onComplete: () => {
+            this.cameraAnimationInProgress = false; // Indiquer que l'animation de la caméra est terminée
+            this.targetZ = 750;
+            this.currentZ = this.targetZ;
+          }, // Type de transition (accélération/décélération)
+        });
+      }, 1500); // Délai de 5 secondes (5000 ms)
+      
+
+      // Animation/Appariton barre de recherche
+      const searchContainer = document.querySelector(".search-container");
+      if (searchContainer) {
+        gsap.set(searchContainer, { y: 50, opacity: 0 });
+        setTimeout(() => {
+          gsap.to(searchContainer, { duration: 2, ease: "power2.inOut", y: 0, opacity: 1 });
+        }, 8500);
+      }    
+    },
 
     // Charger un modèle STL
     loadModel() {
@@ -114,10 +157,8 @@ export default {
       });
     },
     
-    
-
-
     initThree() {
+      this.sounds = [];
       const container = this.$refs.threeContainer;
       const infoContainer = this.$refs.infoContainer;
       const width = container.clientWidth;
@@ -125,7 +166,7 @@ export default {
 
       const scene = new THREE.Scene();
       this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-      this.camera.position.set(200, 0, 2050);
+      this.camera.position.set(200, 0, 2500);
 
       // Définir rotation initiale
       const euler = new THREE.Euler(
@@ -140,7 +181,7 @@ export default {
       container.appendChild(renderer.domElement);
 
       // Configuration des particules
-      const particleCount = 200000;
+      const particleCount = 50000;
       const radiusTop = 130;
       const radiusBottom = 1;
       const particlesHeight = 10000;
@@ -197,7 +238,7 @@ export default {
         }
 
         particles.geometry.attributes.position.needsUpdate = true;
-      };
+      };       
 
       // Lumières
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -206,8 +247,6 @@ export default {
       const pointLight = new THREE.PointLight(0xffffff, 1);
       pointLight.position.set(10, 10, 10);
       scene.add(pointLight);
-
-
 
 
       // Ajouter les pochettes d'albums
@@ -249,6 +288,8 @@ export default {
         sounds.push(sound);
         mesh.add(sound);
 
+        this.sounds.push(sound);
+
         // Ajouter le texte sous la pochette
         const textDiv = document.createElement("div");
         textDiv.className = "info";
@@ -267,6 +308,34 @@ export default {
         event.preventDefault();
         this.targetZ -= event.deltaY * 0.01;
       }, { passive: false });
+
+     
+
+      let startY = 0;
+      
+      // Écouteur pour le début du mouvement tactile
+      window.addEventListener("touchstart", (event) => {
+        if (event.touches.length === 1) { // Vérifier qu'un seul doigt est utilisé
+          startY = event.touches[0].clientY; // Enregistrer la position verticale initiale
+        }
+      }, { passive: false });
+      
+      // Écouteur pour le mouvement tactile
+      window.addEventListener("touchmove", (event) => {
+        if (event.touches.length === 1) {
+          event.preventDefault(); // Empêcher le comportement par défaut (par exemple, le défilement natif)
+      
+          const currentY = event.touches[0].clientY; // Position verticale actuelle
+          const deltaY = startY - currentY; // Différence de position pour déterminer la direction du défilement
+      
+          this.targetZ += deltaY * 0.03; // Modifier la position cible en fonction du mouvement
+          startY = currentY; // Mettre à jour la position de départ pour le prochain mouvement
+        }
+      }, { passive: false });
+      
+
+
+
 
       // Gérer le mouvement de la souris
       const mouse = { x: 0, y: 0 };
@@ -348,6 +417,7 @@ export default {
 
       animate();
 
+      
       // Écouteur d'événement pour le redimensionnement de la fenêtre
       const onWindowResize = () => {
         this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -371,7 +441,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-/* Ajoutez votre CSS ici */
-</style>
