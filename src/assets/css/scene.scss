@@ -2,6 +2,11 @@
 
 body{
     font-family: 'Poppins', sans-serif;
+    overflow: hidden;
+}
+
+* {
+    user-select: none;
 }
 .scene{
     display: flex;
@@ -81,3 +86,13 @@ body{
     }
 }
   
+
+
+.audio-button{
+    z-index: 1000;
+    background: none;
+    color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    white-space: nowrap
+}

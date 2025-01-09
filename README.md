@@ -1,4 +1,4 @@
-# deezer-search
+# sound3d
 
 ## Project setup
 ```

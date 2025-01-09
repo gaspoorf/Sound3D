@@ -1,5 +1,12 @@
 <template>
   <div id="app">
+
+    <audio ref="backgroundAudio" autoplay loop>
+      <source src="@/assets/audio/2step.mp3" type="audio/mp3" />
+      Votre navigateur ne supporte pas l'élément audio.
+    </audio>
+
+
     <LoadingScreen  @loaded="loading = false" />
 
     <div class="scene" ref="threeContainer">
@@ -39,11 +46,14 @@ export default {
       scene: null, // La scène pour Three.js
       camera: null, // La caméra pour Three.js
       isMoved: false,
+      audioContext: null,
+      gainNode: null,
     };
   },
   mounted() {
     // Utilisez $nextTick pour s'assurer que le DOM est prêt avant d'appeler initThree
     this.$nextTick(() => {
+      this.initAudio();
       this.initThree();
     });
   },
@@ -62,6 +72,11 @@ export default {
           this.$refs.threeExperience.stopAllSounds();
         }
 
+        // Arrêtez les sons en cours avec fondu
+        if (this.$refs.backgroundAudio) {
+          this.fadeOutAudio();
+        }
+
         this.tracks = [];
         const response = await axios.get(`https://sound3d.vercel.app/api/search?q=${query}`);
         this.tracks = response.data.data;
@@ -78,6 +93,45 @@ export default {
         gsap.to(div, { duration: 0.5, opacity: 1, delay: 5 });
       }});
     },
+
+    initAudio() {
+      const audioElement = this.$refs.backgroundAudio;
+
+      if (audioElement) {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const audioSource = this.audioContext.createMediaElementSource(audioElement);
+        this.gainNode = this.audioContext.createGain();
+
+        // Connect audio source to gain node, and then to the audio context destination
+        audioSource.connect(this.gainNode);
+        this.gainNode.connect(this.audioContext.destination);
+
+        // Set initial volume
+        this.gainNode.gain.setValueAtTime(1, this.audioContext.currentTime);
+      }
+    },
+
+    fadeOutAudio() {
+      if (this.$refs.backgroundAudio && this.gainNode) {
+        const currentTime = this.audioContext.currentTime;
+    
+        // Fixe la valeur actuelle du gain pour éviter un saut
+        this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, currentTime);
+    
+        // Démarre le fade-out progressif
+        this.gainNode.gain.linearRampToValueAtTime(0, currentTime + 6); // Fade-out sur 6 secondes
+    
+        setTimeout(() => {
+          if (this.$refs.backgroundAudio) {
+            this.$refs.backgroundAudio.pause(); // Arrête la lecture
+            this.$refs.backgroundAudio.currentTime = 0; // Réinitialise à zéro
+          }
+        }, 6000); // Arrête complètement après 6 secondes
+      } else {
+        console.warn("L'élément audio ou le gainNode est introuvable.");
+      }
+    }, 
+    
 
 
     initThree() {

@@ -97,7 +97,7 @@ export default {
             this.currentZ = this.targetZ;
           }, // Type de transition (accélération/décélération)
         });
-      }, 1500); // Délai de 5 secondes (5000 ms)
+      }, 8000); // Délai de 5 secondes (5000 ms)
       
 
       // Animation/Appariton barre de recherche
@@ -106,7 +106,7 @@ export default {
         gsap.set(searchContainer, { y: 50, opacity: 0 });
         setTimeout(() => {
           gsap.to(searchContainer, { duration: 2, ease: "power2.inOut", y: 0, opacity: 1 });
-        }, 8500);
+        }, 15000);
       }    
     },
 
@@ -285,7 +285,6 @@ export default {
           sound.setVolume(0);
           sound.play();
         });
-        
         sounds.push(sound);
         mesh.add(sound);
 
@@ -375,44 +374,14 @@ export default {
           this.camera.position.z = this.currentZ;
         }
 
-    
-
-        // let targetVolumes = Array(albumMeshes.length).fill(0); // Les volumes cibles des sons
-        
-
-        // albumMeshes.forEach((mesh, index) => {
-        //   const distance = this.camera.position.distanceTo(mesh.position);
-        //   const targetVolume = Math.max(0, 1.5 - distance / 10);
-
-        //   // Lissage du volume
-        //   targetVolumes[index] += (targetVolume - targetVolumes[index]) * 0.1;
-        //   sounds[index].setVolume(targetVolumes[index]);
-        // });
-
+        albumMeshes.forEach((mesh, index) => {
+          const distance = this.camera.position.distanceTo(mesh.position);
+          const volume = Math.max(0, 1.5 - distance / 10);
+          sounds[index].setVolume(volume);
+        });
 
         let closestMesh = null;
         let closestDistance = Infinity;
-
-        let closestIndex = -1;
-        
-
-        albumMeshes.forEach((mesh, index) => {
-          const distance = Math.abs(this.camera.position.z - mesh.position.z);
-          if (distance < closestDistance) {
-            closestDistance = distance;
-            closestIndex = index;
-          }
-        });
-
-        // Ajuster les volumes
-        albumMeshes.forEach((mesh, index) => {
-          if (index === closestIndex) {
-            sounds[index].setVolume(1); // Volume maximum pour le plus proche
-          } else {
-            sounds[index].setVolume(0); // Muter les autres sons
-          }
-        });
-
 
         albumMeshes.forEach((mesh) => {
           const distance = Math.abs(this.camera.position.z - mesh.position.z);

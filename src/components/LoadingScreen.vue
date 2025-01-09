@@ -24,9 +24,9 @@ export default {
           setTimeout(() => {
             this.isLoading = false;
             this.$emit('loaded');
-          }, 500);
+          }, 1000);
         }
-      }, 5);
+      }, 50);
     },
   },
   mounted() {
@@ -47,8 +47,9 @@ export default {
   align-items: end;
   background-color: #000000;
   color: white;
-  z-index: 9999;
-  font-size: 7rem;
+  z-index: 999;
+  font-size: 5rem;
+  font-weight: bold;
   opacity: 0;
   transition: opacity 1s ease-in-out;
   pointer-events: none;
