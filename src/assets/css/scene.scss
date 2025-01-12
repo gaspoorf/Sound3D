@@ -3,6 +3,7 @@
 body{
     font-family: 'Poppins', sans-serif;
     overflow: hidden;
+    margin: 0;
 }
 
 * {
@@ -11,6 +12,9 @@ body{
 .scene{
     display: flex;
     justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
 }
 
 .three-container {
@@ -20,6 +24,16 @@ body{
     position: fixed;
     top: 0;
     left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    canvas {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover;
+    }
 }
   
 .info-container {
@@ -37,6 +51,7 @@ body{
     padding-top: 0.7rem;
     border-radius: 100px;
     margin-left: 2rem;
+    text-align: center;
       
     .info {
         color: white;
@@ -50,7 +65,7 @@ body{
 
 .search-container {
     z-index: 1;
-    position: fixed;
+    position: absolute;
     display: flex;
     top: 75%;
     left: 50%;
@@ -95,8 +110,6 @@ body{
                 scale: 1.1;
             }
         }
-
-       
     }
 }
   

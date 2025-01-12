@@ -1,23 +1,17 @@
 <template>
   <div id="app">
-
     <audio ref="backgroundAudio" autoplay loop>
       <source src="@/assets/audio/2step.mp3" type="audio/mp3" />
       Votre navigateur ne supporte pas l'élément audio.
     </audio>
 
-
     <LoadingScreen  @loaded="loading = false" />
 
     <div class="scene" ref="threeContainer">
     
-      <div :class="['search-container', { 'search-top-left': hasSearched }]" ref="myDiv">
+      <div class="search-container">
         <input v-model="query" @keyup.enter="search(query)" placeholder="Rechercher un artiste, une chanson" />
         <button @click="query !== '' ? search(query) : null" class="search-btn"><img src="@/assets/img/search-icon.svg"></button>
-      </div>
-
-      <div v-if="tracks.length === 0 && query !== ''">
-       
       </div>
 
       <ThreeExperience ref="threeExperience" :tracks="tracks" :key="tracks.length" />
@@ -42,37 +36,30 @@ export default {
       loading: true,
       hasSearched: false,
       tracks: [],
-      query: '', // Le modèle pour la recherche
-      scene: null, // La scène pour Three.js
-      camera: null, // La caméra pour Three.js
+      query: '',
+      scene: null,
+      camera: null,
       isMoved: false,
       audioContext: null,
       gainNode: null,
+      firstSearch: true,
     };
   },
   mounted() {
-    // Utilisez $nextTick pour s'assurer que le DOM est prêt avant d'appeler initThree
     this.$nextTick(() => {
       this.initAudio();
       this.initThree();
     });
   },
-  watch: {
-    hasSearched(newVal) {
-      if (newVal) {
-        this.animateDiv(); // Lancer l'animation
-      }
-    },
-  },
   methods: {
     async search(query) {
       try {
-        // Arrêtez les sons en cours
+        // couper les sons en cours
         if (this.$refs.threeExperience) {
           this.$refs.threeExperience.stopAllSounds();
         }
 
-        // Arrêtez les sons en cours avec fondu
+        // couper les sons en cours avec fondu
         if (this.$refs.backgroundAudio) {
           this.fadeOutAudio();
         }
@@ -82,65 +69,83 @@ export default {
         // const response = await axios.get(`http://localhost:3000/api/search?q=${query}`);
         this.tracks = response.data.data;
         this.hasSearched = true;
+
+        if (this.firstSearch) {
+          this.animateDiv(); // Lancer l'animation
+        } else {
+          console.log("deuxieme recherch pas d'anim");
+        }
+
       } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
       }
     },
 
     animateDiv() {
-      const div = this.$refs.myDiv;
+      const div = document.querySelector('.search-container');
+      console.log("First search detected");
       gsap.to(div, { duration: 0.5, opacity: 0, onComplete: () => {
         gsap.set(div, { top: '1rem', left: '1rem', transform: 'translate(0, 0)' });
         gsap.to(div, { duration: 0.5, opacity: 1, delay: 5 });
       }});
+      this.firstSearch = false;
     },
+
+    
 
     initAudio() {
       const audioElement = this.$refs.backgroundAudio;
-
+    
       if (audioElement) {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const audioSource = this.audioContext.createMediaElementSource(audioElement);
         this.gainNode = this.audioContext.createGain();
-
-        // Connect audio source to gain node, and then to the audio context destination
+    
         audioSource.connect(this.gainNode);
         this.gainNode.connect(this.audioContext.destination);
-
-        // Set initial volume
+    
+        // volume initial
         this.gainNode.gain.setValueAtTime(1, this.audioContext.currentTime);
+    
+        // l'audio démarre après une interaction
+        const resumeAudioContext = () => {
+          if (this.audioContext.state === "suspended") {
+            this.audioContext.resume();
+          }
+          audioElement.play();
+          document.removeEventListener("click", resumeAudioContext);
+          document.removeEventListener("touchstart", resumeAudioContext);
+        };
+    
+        document.addEventListener("click", resumeAudioContext);
+        document.addEventListener("touchstart", resumeAudioContext);
       }
     },
+    
 
     fadeOutAudio() {
       if (this.$refs.backgroundAudio && this.gainNode) {
         const currentTime = this.audioContext.currentTime;
-    
-        // Fixe la valeur actuelle du gain pour éviter un saut
+  
         this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, currentTime);
-    
-        // Démarre le fade-out progressif
-        this.gainNode.gain.linearRampToValueAtTime(0, currentTime + 6); // Fade-out sur 6 secondes
+        this.gainNode.gain.linearRampToValueAtTime(0, currentTime + 6); // fade-out de 6 secondes
     
         setTimeout(() => {
           if (this.$refs.backgroundAudio) {
-            this.$refs.backgroundAudio.pause(); // Arrête la lecture
-            this.$refs.backgroundAudio.currentTime = 0; // Réinitialise à zéro
+            this.$refs.backgroundAudio.pause();
+            this.$refs.backgroundAudio.currentTime = 0;
           }
-        }, 6000); // Arrête complètement après 6 secondes
+        }, 6000); // stopper complètement après 6 secondes
       } else {
-        console.warn("L'élément audio ou le gainNode est introuvable.");
+        console.warn("L'élément audio est introuvable.");
       }
     }, 
-    
-
 
     initThree() {
       const container = this.$refs.threeContainer;
       const width = container.clientWidth;
       const height = container.clientHeight;
 
-      // Assurez-vous que container est défini avant de continuer
       if (!container) {
         console.error("Le conteneur threeContainer est introuvable.");
         return;
@@ -158,7 +163,7 @@ export default {
       renderer.setSize(width, height);
       container.appendChild(renderer.domElement);
 
-      // Ajout d'une lumière et d'un point lumineux
+      // lumière et point lumineux
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
       this.scene.add(ambientLight);
 
@@ -166,7 +171,7 @@ export default {
       pointLight.position.set(10, 10, 10);
       this.scene.add(pointLight);
 
-      // Animation de la scène
+      // znimation de la scène
       const animate = () => {
         requestAnimationFrame(animate);
         renderer.render(this.scene, this.camera);

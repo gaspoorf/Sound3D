@@ -13,11 +13,11 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 
 export default {
   props: {
-    tracks: Array, // Les morceaux récupérés depuis l'API Deezer
+    tracks: Array,
   },
   data() {
     return {
-      cameraAnimationInProgress: false,  // Variable pour savoir si l'animation de la caméra est en cours
+      cameraAnimationInProgress: false,
       targetZ: 2500,
       model: null,
       firstAnim: true,
@@ -26,15 +26,19 @@ export default {
   mounted() {
     this.initThree();
     this.loadModel();
+    this.$nextTick(() => {
+      this.onWindowResize(); // Appeler explicitement onWindowResize
+    });
+    window.addEventListener('resize', this.onWindowResize);
     watch(
       () => this.tracks,
       (newTracks) => {
         if (newTracks.length > 0 && !this.animationStarted) {
           this.animationStarted = true;
           this.tracksTrue = true;
-          console.log("Animation started due to tracks update.");
+          // console.log("Animation started due to tracks update.");
 
-          // Animation de la caméra vers une nouvelle position avec GSAP
+          // animation de la caméra
           gsap.to(this.camera.position, {
             x: 0,
             y: 0,
@@ -42,10 +46,10 @@ export default {
             duration: 6,
             ease: "power2.out",
             onStart: () => {
-              this.cameraAnimationInProgress = true;  // Indiquer que l'animation de la caméra a commencé
+              this.cameraAnimationInProgress = true;
             },
             onComplete: () => {
-              this.cameraAnimationInProgress = false;  // Indiquer que l'animation de la caméra est terminée
+              this.cameraAnimationInProgress = false;
               this.targetZ = 750;
               this.currentZ = this.targetZ;
             }
@@ -64,6 +68,7 @@ export default {
     );
   },
   beforeUnmount() {
+    window.removeEventListener('resize', this.onWindowResize);
     this.cleanUp();
   },
   methods: {
@@ -79,7 +84,7 @@ export default {
     
     firstAnimation() {
       // Premiere animation 
-      console.log("first anim started");
+      // console.log("first anim started");
       setTimeout(() => {
         gsap.to(this.camera.position, {
           x: 200,
@@ -88,13 +93,13 @@ export default {
           duration: 7,
           ease: "power2.inOut",
           onStart: () => {
-            this.cameraAnimationInProgress = true; // Indiquer que l'animation de la caméra a commencé
+            this.cameraAnimationInProgress = true;
           },
           onComplete: () => {
-            this.cameraAnimationInProgress = false; // Indiquer que l'animation de la caméra est terminée
+            this.cameraAnimationInProgress = false;
             this.targetZ = 750;
             this.currentZ = this.targetZ;
-          }, // Type de transition (accélération/décélération)
+          },
         });
       }, 6500);
       
@@ -105,7 +110,7 @@ export default {
         gsap.set(searchContainer, { y: 50, opacity: 0 });
         setTimeout(() => {
           gsap.to(searchContainer, { duration: 2, ease: "power2.inOut", y: 0, opacity: 1 });
-        }, 15000);
+        }, 12000);
       }    
     },
 
@@ -122,18 +127,17 @@ export default {
           this.scene.environment = envMap;
         });
     
-        // Création du matériau métallique avec réflexion
+        // matériau métallique
         const material = new THREE.MeshStandardMaterial({
           color: 0xaaaaaa,
           metalness: 1,   
-          roughness: 0.2,  // Faible rugosité
-          envMapIntensity: 1, // Réflexions basées sur l'environnement
+          roughness: 0.2,
+          envMapIntensity: 1,
         });
     
-        // Création du modèle 3D avec le matériau
+        // creation modèle 3D avec le matériau
         const model = new THREE.Mesh(geometry, material);
     
-        // Transformation du modèle
         model.rotation.x = Math.PI / 2;
         model.scale.set(7, 7, 7);
         model.position.set(0, 20, 750);
@@ -143,17 +147,30 @@ export default {
           model.scale.set(5, 5, 5);
         }
     
-        // Ajout à la scène
         this.scene.add(model);
-    
-        // Référence globale au modèle (optionnel)
         this.model = model;
     
-        // Mise à jour de la matrice
+        // maj de la matrice
         model.updateMatrix();
       }, undefined, (error) => {
         console.error("Erreur de chargement du modèle:", error);
       });
+    },
+
+    onWindowResize() {
+      const container = this.$refs.threeContainer;
+  
+      // Vérifiez les dimensions du conteneur pour éviter les erreurs
+      const width = container.clientWidth || window.innerWidth;
+      const height = container.clientHeight || window.innerHeight;
+  
+      // Ajuster la caméra
+      this.camera.aspect = width / height;
+      this.camera.updateProjectionMatrix();
+  
+      // Ajuster le renderer
+      this.renderer.setSize(width, height);
+      this.renderer.setPixelRatio(window.devicePixelRatio);
     },
     
     initThree() {
@@ -167,11 +184,11 @@ export default {
       this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
       this.camera.position.set(200, 0, 2500);
 
-      // Définir rotation initiale
+      // rotation initiale
       const euler = new THREE.Euler(
-        THREE.MathUtils.degToRad(0),  // Inclinaison X
-        THREE.MathUtils.degToRad(90), // Inclinaison Y
-        THREE.MathUtils.degToRad(0)   // Inclinaison Z
+        THREE.MathUtils.degToRad(0),
+        THREE.MathUtils.degToRad(90),
+        THREE.MathUtils.degToRad(0)
       );
       this.camera.quaternion.setFromEuler(euler);
 
@@ -179,7 +196,7 @@ export default {
       renderer.setSize(width, height);
       container.appendChild(renderer.domElement);
 
-      // Configuration des particules
+      // configuration particules
       const particleCount = 50000;
       const radiusTop = 130;
       const radiusBottom = 1;
@@ -215,7 +232,7 @@ export default {
       particles.position.z = -2000;
       scene.add(particles);
 
-      // Fonction d'animation des particules
+      //animation des particules
       const animateParticles = () => {
         const positions = particles.geometry.attributes.position.array;
         const velocities = particles.geometry.attributes.velocity.array;
@@ -248,7 +265,7 @@ export default {
       scene.add(pointLight);
 
 
-      // Ajouter les pochettes d'albums
+      // ajout des pochettes d'albums
       const textureLoader = new THREE.TextureLoader();
       const albumMeshes = [];
       const sounds = [];
@@ -289,7 +306,7 @@ export default {
 
         this.sounds.push(sound);
 
-        // Ajouter le texte sous la pochette
+        // ajout du texte sous la pochette
         const textDiv = document.createElement("div");
         textDiv.className = "info";
         textDiv.textContent = `${track.title} - ${track.artist.name}`;
@@ -297,12 +314,11 @@ export default {
         mesh.userData.textDiv = textDiv;
       });
 
-      // Variables pour le zoom fluide
-    
+      // zoom fluide
       this.currentZ = this.camera.position.z;
       const zoomSmoothness = 0.1;
 
-      // Animation du zoom
+      // animation du zoom
       window.addEventListener("wheel", (event) => {
         event.preventDefault();
         this.targetZ -= event.deltaY * 0.01;
@@ -312,31 +328,28 @@ export default {
 
       let startY = 0;
       
-      // Écouteur pour le début du mouvement tactile
+      //mouvement tactile
       window.addEventListener("touchstart", (event) => {
-        if (event.touches.length === 1) { // Vérifier qu'un seul doigt est utilisé
-          startY = event.touches[0].clientY; // Enregistrer la position verticale initiale
+        if (event.touches.length === 1) { 
+          startY = event.touches[0].clientY;
         }
       }, { passive: false });
       
-      // Écouteur pour le mouvement tactile
+      //mouvement tactile
       window.addEventListener("touchmove", (event) => {
         if (event.touches.length === 1) {
-          event.preventDefault(); // Empêcher le comportement par défaut (par exemple, le défilement natif)
+          event.preventDefault();
       
-          const currentY = event.touches[0].clientY; // Position verticale actuelle
-          const deltaY = startY - currentY; // Différence de position pour déterminer la direction du défilement
+          const currentY = event.touches[0].clientY;
+          const deltaY = startY - currentY;
       
-          this.targetZ += deltaY * 0.03; // Modifier la position cible en fonction du mouvement
-          startY = currentY; // Mettre à jour la position de départ pour le prochain mouvement
+          this.targetZ += deltaY * 0.03;
+          startY = currentY;
         }
       }, { passive: false });
       
 
-
-
-
-      // Gérer le mouvement de la souris
+      //mouvement de la souris
       const mouse = { x: 0, y: 0 };
       const targetMouse = { x: 0, y: 0 };
 
@@ -348,12 +361,9 @@ export default {
       // Fonction principale d'animation
       const animate = () => {
         requestAnimationFrame(animate);
-
         animateParticles();
 
-       
-
-        // en fonction de la position de la souris
+        // rotation model en fonction de la souris
         if (this.model) {
           this.lastRotationX = 0.01;
           this.lastRotationY = 0.01;
@@ -369,8 +379,6 @@ export default {
           
         }
       
-     
-
         if (!this.cameraAnimationInProgress) {
           this.currentZ += (this.targetZ - this.currentZ) * zoomSmoothness;
           this.camera.position.z = this.currentZ;
@@ -382,17 +390,11 @@ export default {
           const minVolume = 0.0;
           const falloff = 5;
           const volume = Math.max(minVolume, maxVolume * Math.exp(-distance / falloff));
-        
           sounds[index].setVolume(volume);
         });
-        
-        
 
         let closestMesh = null;
         let closestDistance = Infinity;
-
-
-
 
         albumMeshes.forEach((mesh) => {
           const distance = Math.abs(this.camera.position.z - mesh.position.z);
@@ -413,8 +415,6 @@ export default {
           }
         });
 
-
-
         const lerpFactor = 0.1;
         mouse.x += (targetMouse.x - mouse.x) * lerpFactor;
         mouse.y += (targetMouse.y - mouse.y) * lerpFactor;
@@ -425,28 +425,18 @@ export default {
           mesh.rotation.y = mouse.x * tiltFactor;
         });
 
-        renderer.render(scene, this.camera);  // Fixe l'accès au renderer ici
+        renderer.render(scene, this.camera);
       };
 
       animate();
-
       
-      // Écouteur d'événement pour le redimensionnement de la fenêtre
-      const onWindowResize = () => {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      };
+      //redimensionnement de la fenêtre
+      window.addEventListener('resize', this.onWindowResize);
 
-      window.addEventListener('resize', onWindowResize);
-
-      // Sauvegarder les éléments pour nettoyage
+      // nettoyage
       this.scene = scene;
-      this.renderer = renderer;  // Lier le renderer à this
+      this.renderer = renderer;
     },
-
-
-    
 
     cleanUp() {
       this.renderer.dispose();
