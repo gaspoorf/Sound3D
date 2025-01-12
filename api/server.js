@@ -51,3 +51,9 @@ const server = createServer(app);
 module.exports = (req, res) => {
   server.emit('request', req, res);
 };
+
+const PORT = 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
