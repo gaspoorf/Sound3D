@@ -13,11 +13,11 @@
     
       <div :class="['search-container', { 'search-top-left': hasSearched }]" ref="myDiv">
         <input v-model="query" @keyup.enter="search(query)" placeholder="Rechercher un artiste, une chanson" />
-        <button @click="search(query)" class="search-btn"><img src="@/assets/img/search-icon.svg"></button>
+        <button @click="query !== '' ? search(query) : null" class="search-btn"><img src="@/assets/img/search-icon.svg"></button>
       </div>
 
       <div v-if="tracks.length === 0 && query !== ''">
-        <p>Recherche en cours...</p>
+       
       </div>
 
       <ThreeExperience ref="threeExperience" :tracks="tracks" :key="tracks.length" />
@@ -79,6 +79,7 @@ export default {
 
         this.tracks = [];
         const response = await axios.get(`https://sound3d.vercel.app/api/search?q=${query}`);
+        // const response = await axios.get(`http://localhost:3000/api/search?q=${query}`);
         this.tracks = response.data.data;
         this.hasSearched = true;
       } catch (error) {

@@ -38,9 +38,9 @@ export default {
           gsap.to(this.camera.position, {
             x: 0,
             y: 0,
-            z: 750,  // Position cible de la caméra
-            duration: 6, // Durée de l'animation
-            ease: "power2.out",  // Type de transition (accélération/décélération)
+            z: 750,
+            duration: 6,
+            ease: "power2.out",
             onStart: () => {
               this.cameraAnimationInProgress = true;  // Indiquer que l'animation de la caméra a commencé
             },
@@ -53,7 +53,7 @@ export default {
 
           gsap.to(this.camera.rotation, {
             x: 0,
-            y: 0,  // Inclinaison en Y de la caméra
+            y: 0,
             z: 0,
             duration: 5,
             ease: "power2.out",
@@ -67,14 +67,13 @@ export default {
     this.cleanUp();
   },
   methods: {
-
     stopAllSounds() {
       this.sounds.forEach((sound) => {
         if (sound.isPlaying) {
           sound.stop();
         }
       });
-      this.sounds = []; // Optionnel, pour nettoyer la liste des sons
+      this.sounds = []; // nettoyer la liste des sons
     },
 
     
@@ -85,8 +84,8 @@ export default {
         gsap.to(this.camera.position, {
           x: 200,
           y: 0,
-          z: 750, // Position cible de la caméra
-          duration: 7, // Durée de l'animation
+          z: 750,
+          duration: 7,
           ease: "power2.inOut",
           onStart: () => {
             this.cameraAnimationInProgress = true; // Indiquer que l'animation de la caméra a commencé
@@ -97,7 +96,7 @@ export default {
             this.currentZ = this.targetZ;
           }, // Type de transition (accélération/décélération)
         });
-      }, 8000); // Délai de 5 secondes (5000 ms)
+      }, 6500);
       
 
       // Animation/Appariton barre de recherche
@@ -115,18 +114,18 @@ export default {
       const loader = new STLLoader();
     
       loader.load('/model/sphere.stl', (geometry) => {
-        // Chargement de l'environnement HDR (par exemple une image 360°)
+        // charger environnement hdr
         const envLoader = new RGBELoader();
         envLoader.load('/texture/space.hdr', (hdrEquirect) => {
           const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
           const envMap = pmremGenerator.fromEquirectangular(hdrEquirect).texture;
-          this.scene.environment = envMap;  // Applique l'environnement pour les réflexions
+          this.scene.environment = envMap;
         });
     
         // Création du matériau métallique avec réflexion
         const material = new THREE.MeshStandardMaterial({
-          color: 0xaaaaaa, // Couleur métallique
-          metalness: 1,    // Complètement métallique
+          color: 0xaaaaaa,
+          metalness: 1,   
           roughness: 0.2,  // Faible rugosité
           envMapIntensity: 1, // Réflexions basées sur l'environnement
         });
@@ -140,7 +139,7 @@ export default {
         model.position.set(0, 20, 750);
 
         if (this.tracksTrue){
-          model.position.set(0, 0, 100);
+          model.position.set(0, 0, 0);
           model.scale.set(5, 5, 5);
         }
     
@@ -270,17 +269,17 @@ export default {
 
         const geometry = new THREE.PlaneGeometry(5, 5);
         const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(0, 0, 720 - index * 20);
+        mesh.position.set(0, 0, 720 - index * 25);
         scene.add(mesh);
         albumMeshes.push(mesh);
 
-        const sound = new THREE.PositionalAudio(listener);
+        
+        const sound = new THREE.Audio(listener);
         const audioUrl = `https://sound3d.vercel.app/api/audio?url=${encodeURIComponent(track.preview)}`;
 
         const audioLoader = new THREE.AudioLoader();
         audioLoader.load(audioUrl, (buffer) => {
           sound.setBuffer(buffer);
-          sound.setRefDistance(1);
           sound.setLoop(true);
           sound.setVolume(0);
           sound.play();
@@ -352,36 +351,48 @@ export default {
 
         animateParticles();
 
-        // Déplacer la sphère en fonction de la position de la souris
-        if (this.model) {
-          this.model.rotation.x -= mouse.x * 0.01; // Contrôle la vitesse de la rotation X
-          this.lastRotationX = this.model.rotation.x;
-          this.model.rotation.y -= mouse.y * 0.01; // Contrôle la vitesse de la rotation Y
-          this.lastRotationY = this.model.rotation.y;
-        }
-        
+       
 
-        // Rotation légère de la sphère
+        // en fonction de la position de la souris
         if (this.model) {
-          this.model.rotation.x = this.lastRotationX; // Rotation lente sur l'axe X
-          this.model.rotation.y = this.lastRotationY; // Rotation lente sur l'axe Y
+          this.lastRotationX = 0.01;
+          this.lastRotationY = 0.01;
+          this.lastRotationY = this.model.rotation.y;
+          this.model.rotation.x = this.lastRotationX; 
+          this.model.rotation.y = this.lastRotationY;
         }
+
+        if (this.model) {
+          this.model.rotation.x -= mouse.x * 0.01;
+          this.lastRotationX = this.model.rotation.x;
+          this.model.rotation.y += mouse.y * 0.01;
+          
+        }
+      
      
 
         if (!this.cameraAnimationInProgress) {
-          // Assurez-vous que currentZ est bien synchronisé avec targetZ
           this.currentZ += (this.targetZ - this.currentZ) * zoomSmoothness;
           this.camera.position.z = this.currentZ;
         }
 
         albumMeshes.forEach((mesh, index) => {
           const distance = this.camera.position.distanceTo(mesh.position);
-          const volume = Math.max(0, 1.5 - distance / 10);
+          const maxVolume = 1.0;
+          const minVolume = 0.0;
+          const falloff = 5;
+          const volume = Math.max(minVolume, maxVolume * Math.exp(-distance / falloff));
+        
           sounds[index].setVolume(volume);
         });
+        
+        
 
         let closestMesh = null;
         let closestDistance = Infinity;
+
+
+
 
         albumMeshes.forEach((mesh) => {
           const distance = Math.abs(this.camera.position.z - mesh.position.z);
@@ -401,6 +412,8 @@ export default {
             textDiv.style.display = "none";
           }
         });
+
+
 
         const lerpFactor = 0.1;
         mouse.x += (targetMouse.x - mouse.x) * lerpFactor;
