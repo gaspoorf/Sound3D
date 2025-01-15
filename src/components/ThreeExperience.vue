@@ -198,7 +198,7 @@ export default {
 
       // configuration particules
       const particleCount = 50000;
-      const radiusTop = 130;
+      const radiusTop = 200;
       const radiusBottom = 1;
       const particlesHeight = 10000;
       const geometry = new THREE.BufferGeometry();
@@ -224,7 +224,7 @@ export default {
         color: 0xffffff,
         size: 0.1,
         transparent: true,
-        opacity: 0.6
+        opacity: 0.9
       });
 
       const particles = new THREE.Points(geometry, material);

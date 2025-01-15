@@ -1,7 +1,7 @@
 <template>
   <div :class="['loading-screen', { 'loading-screen-display': isLoading }]">
     <div class="audio-instruction">
-    <p>Autoriser l'audio pour une meilleure expérience</p>
+    <p>Activer l'audio pour une meilleure expérience</p>
     </div>
     <div class="loading-progress">
       <p>{{ progress }}%</p>
